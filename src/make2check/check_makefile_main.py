@@ -149,7 +149,7 @@ class CheckRule:
         if target is not None and target not in self.all_targets:
             self.all_targets.append(target)
             target = Path(match.group(1))
-            if not target.exists():
+            if not target.exists() and target.suffix != "":
                 print(f"Missing target: {target}")
             else:
                 _logger.info(f"Target {target} already there!")
