@@ -127,9 +127,9 @@ class CheckRule:
         elif match := (re.search(f"Must remake target '(.*)'", line)):
             target = Path(match.group(1))
             if not target.exists():
-                print(f"Must remake {target}")
+                print(f"Missing target: {target}")
             else:
-                print(f"Target {target} already there!")
+                _logger.info(f"Target {target} already there!")
 
         if self.analyse:
             pass
