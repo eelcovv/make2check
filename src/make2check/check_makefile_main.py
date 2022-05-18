@@ -42,23 +42,6 @@ _logger = logging.getLogger(__name__)
 # `from make2check.skeleton import fib`,
 # when using this Python module as a library.
 
-
-def fib(n):
-    """Fibonacci example function
-
-    Args:
-      n (int): integer
-
-    Returns:
-      int: n-th Fibonacci number
-    """
-    assert n > 0
-    a, b = 1, 1
-    for _i in range(n - 1):
-        a, b = b, a + b
-    return a
-
-
 # ---- CLI ----
 # The functions defined in this section are wrappers around the main Python
 # API allowing them to be called directly from the terminal as a CLI
@@ -113,18 +96,58 @@ def setup_logging(loglevel):
     )
 
 
+def match_consider(line):
+    if m := re.search("Considering target file '(.*)'", line):
+        match = m
+    elif m := re.search("Doelbestand '(.*)' wordt overwogen", line):
+        match = m
+    else:
+        match = None
+    return match
+
+
+def match_implicit_rule(line, rule):
+    if m := re.search(f"No implicit rule found for '({rule})'", line):
+        match = m
+    elif m := re.search(f"Geen impliciete regel voor '({rule})' gevonden", line):
+        match = m
+    else:
+        match = None
+    return match
+
+
+def match_must_remake(line, target):
+    if m := re.search(f"Must remake target '({target})'", line):
+        match = m
+    elif m := re.search(f"'({target})' moet opnieuw gemaakt worden", line):
+        match = m
+    else:
+        match = None
+    return match
+
+
 class CheckRule:
     def __init__(self):
         self.rule = None
         self.analyse = False
 
+        self.all_targets = list()
+
     def update(self, line):
-        if match := re.search("Considering target file '(.*)'", line):
-            self.rule = match.group(1)
+        if match := match_consider(line):
+            target = match.group(1)
+            self.rule = target
             self.analyse = True
-        elif match := (re.search(f"No implicit rule found for '{self.rule}'", line)):
+        elif match := match_implicit_rule(line, self.rule):
+            target = match.group(1)
             self.analyse = False
-        elif match := (re.search(f"Must remake target '(.*)'", line)):
+        elif match := match_must_remake(line, self.rule):
+            target = match.group(1)
+        else:
+            target = None
+
+        if target is not None and target not in self.all_targets:
+            self.all_targets.append(target)
             target = Path(match.group(1))
             if not target.exists():
                 print(f"Missing target: {target}")
@@ -140,21 +163,22 @@ def check_make_file():
     Functie die the make file checks
 
     Returns: int
-        Interger
+        Integer
     """
 
     status = -1
-    process = subprocess.Popen(['make', '-Bdn'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(['make', '-Bdn'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               shell=True)
     out, err = process.communicate()
     start_analyse = False
     analyse = {}
     checker = None
     checker = CheckRule()
-    for line in out.decode().split("\n"):
-        _logger.debug(line)
+    clean_lines = out.decode().split("\n")
+    for line in clean_lines:
 
         if checker is not None:
-            checker.update(line)
+            checker.update(line.strip())
 
     return status
 
