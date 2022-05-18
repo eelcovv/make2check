@@ -217,7 +217,11 @@ def main(args):
     if missing == 0:
         print("All done")
     else:
-        print(f"We missen {missing} files")
+        if missing == 1:
+            files = "file"
+        else:
+            files = "files"
+        print(f"We missen {missing} {files}")
 
     _logger.info("Done make2check!")
 
