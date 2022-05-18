@@ -1,6 +1,6 @@
 import pytest
 
-from make2check.skeleton import fib, main
+from make2check.check_makefile_main import fib, main
 
 __author__ = "Eelco van Vliet"
 __copyright__ = "Eelco van Vliet"
