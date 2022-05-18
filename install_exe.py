@@ -8,11 +8,11 @@ This script runs the following steps
 1.: python install.py bdist_wheel
 Generates a wheel file in the dest directory
 
-2.: pip install ict_analyser --no-index --find-links <name of the wheel file> --prefix <location> -U
+2.: pip install make2check --no-index --find-links <name of the wheel file> --prefix <location> -U
 Installs the APP as a library
 
 3.: python install.py install --prefix <location>
-Installs the latexml2sitescore executable
+Installs the make2check executable
 
 See python install_exe.py --help for the options
 """
@@ -35,7 +35,7 @@ from subprocess import PIPE, Popen
 TOOLS_DIR = "\\\\cbsp.nl\\Productie\\secundair\\DecentraleTools\\Output\\CBS_Python"
 
 # Parse command line arguments
-parser = argparse.ArgumentParser("Install the executable of the latexml2sitescore")
+parser = argparse.ArgumentParser("Install the executable of the make2check")
 parser.add_argument("--debug",
                     help="Give debug info",
                     dest="log_level",
@@ -44,7 +44,7 @@ parser.add_argument("--debug",
                     action="store_const")
 parser.add_argument("--app_name",
                     help="Name of the application",
-                    default="latexml2sitescore")
+                    default="make2check")
 parser.add_argument("--system_install",
                     help="If true, install in the system directory",
                     action="store_true")
