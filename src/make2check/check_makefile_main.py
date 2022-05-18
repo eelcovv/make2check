@@ -81,6 +81,12 @@ def parse_args(args):
         action="store_const",
         const=logging.DEBUG,
     )
+    parser.add_argument(
+        "--test",
+        help="Do een droge run zonder iets te doen",
+        action="store_true",
+
+    )
     return parser.parse_args(args)
 
 
@@ -160,7 +166,7 @@ class CheckRule:
             pass
 
 
-def check_make_file():
+def check_make_file(dryrun=False):
     """
     Functie die the make file checks
 
@@ -168,8 +174,18 @@ def check_make_file():
         Integer
     """
 
-    process = subprocess.Popen(['make', '-Bdn'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                               shell=True)
+    make_cmd = []
+
+    if dryrun:
+        make_cmd.append("echo")
+
+    make_cmd.append("make")
+    make_cmd.append("-Bdn")
+
+    _logger.info("Running {}".format(" ".join(make_cmd)))
+
+    process = subprocess.Popen(make_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               shell=False)
     out, err = process.communicate()
     start_analyse = False
     analyse = {}
@@ -197,7 +213,7 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
     _logger.debug("Starting make file check...")
-    missing = check_make_file()
+    missing = check_make_file(dryrun=args.test)
     if missing == 0:
         print("All done")
     else:
