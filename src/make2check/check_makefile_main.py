@@ -130,6 +130,7 @@ class CheckRule:
     def __init__(self):
         self.rule = None
         self.analyse = False
+        self.missing_counter = 0
 
         self.all_targets = list()
 
@@ -150,6 +151,7 @@ class CheckRule:
             self.all_targets.append(target)
             target = Path(match.group(1))
             if not target.exists() and target.suffix != "":
+                self.missing_counter += 1
                 print(f"Missing target: {target}")
             else:
                 _logger.info(f"Target {target} already there!")
@@ -166,7 +168,6 @@ def check_make_file():
         Integer
     """
 
-    status = -1
     process = subprocess.Popen(['make', '-Bdn'], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                shell=True)
     out, err = process.communicate()
@@ -180,7 +181,7 @@ def check_make_file():
         if checker is not None:
             checker.update(line.strip())
 
-    return status
+    return checker.missing_counter
 
 
 def main(args):
@@ -196,11 +197,11 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
     _logger.debug("Starting make file check...")
-    status = check_make_file()
-    if status == 0:
-        _logger.info("All done")
+    missing = check_make_file()
+    if missing == 0:
+        print("All done")
     else:
-        _logger.info("Some files where missing")
+        print(f"We missen {missing} files")
 
     _logger.info("Done make2check!")
 
