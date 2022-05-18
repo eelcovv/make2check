@@ -23,6 +23,9 @@ References:
 import argparse
 import logging
 import sys
+import re
+import subprocess
+from pathlib import Path
 
 from make2check import __version__
 
@@ -72,7 +75,8 @@ def parse_args(args):
     Returns:
       :obj:`argparse.Namespace`: command line parameters namespace
     """
-    parser = argparse.ArgumentParser(description="Run make in debug mode  and find the missing files")
+    parser = argparse.ArgumentParser(
+        description="Run make in debug mode  and find the missing files")
     parser.add_argument(
         "--version",
         action="version",
@@ -88,7 +92,7 @@ def parse_args(args):
     )
     parser.add_argument(
         "-vv",
-        "--very-verbose",
+        "--debug",
         dest="loglevel",
         help="set loglevel to DEBUG",
         action="store_const",
@@ -108,6 +112,29 @@ def setup_logging(loglevel):
         level=loglevel, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S"
     )
 
+
+class CheckRule:
+    def __init__(self):
+        self.rule = None
+        self.analyse = False
+
+    def update(self, line):
+        if match := re.search("Considering target file '(.*)'", line):
+            self.rule = match.group(1)
+            self.analyse = True
+        elif match := (re.search(f"No implicit rule found for '{self.rule}'", line)):
+            self.analyse = False
+        elif match := (re.search(f"Must remake target '(.*)'", line)):
+            target = Path(match.group(1))
+            if not target.exists():
+                print(f"Must remake {target}")
+            else:
+                print(f"Target {target} already there!")
+
+        if self.analyse:
+            pass
+
+
 def check_make_file():
     """
     Functie die the make file checks
@@ -117,6 +144,18 @@ def check_make_file():
     """
 
     status = -1
+    process = subprocess.Popen(['make', '-Bdn'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = process.communicate()
+    start_analyse = False
+    analyse = {}
+    checker = None
+    checker = CheckRule()
+    for line in out.decode().split("\n"):
+        _logger.debug(line)
+
+        if checker is not None:
+            checker.update(line)
+
     return status
 
 
