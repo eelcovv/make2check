@@ -72,13 +72,12 @@ def parse_args(args):
     Returns:
       :obj:`argparse.Namespace`: command line parameters namespace
     """
-    parser = argparse.ArgumentParser(description="Just a Fibonacci demonstration")
+    parser = argparse.ArgumentParser(description="Run make in debug mode  and find the missing files")
     parser.add_argument(
         "--version",
         action="version",
         version="make2check {ver}".format(ver=__version__),
     )
-    parser.add_argument(dest="n", help="n-th Fibonacci number", type=int, metavar="INT")
     parser.add_argument(
         "-v",
         "--verbose",
@@ -109,6 +108,17 @@ def setup_logging(loglevel):
         level=loglevel, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S"
     )
 
+def check_make_file():
+    """
+    Functie die the make file checks
+
+    Returns: int
+        Interger
+    """
+
+    status = -1
+    return status
+
 
 def main(args):
     """Wrapper allowing :func:`fib` to be called with string arguments in a CLI fashion
@@ -122,9 +132,14 @@ def main(args):
     """
     args = parse_args(args)
     setup_logging(args.loglevel)
-    _logger.debug("Starting crazy calculations...")
-    print("The {}-th Fibonacci number is {}".format(args.n, fib(args.n)))
-    _logger.info("Script ends here")
+    _logger.debug("Starting make file check...")
+    status = check_make_file()
+    if status == 0:
+        _logger.info("All done")
+    else:
+        _logger.info("Some files where missing")
+
+    _logger.info("Done make2check!")
 
 
 def run():
