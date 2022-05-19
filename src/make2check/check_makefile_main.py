@@ -184,8 +184,14 @@ def check_make_file(dryrun=False):
 
     _logger.info("Running {}".format(" ".join(make_cmd)))
 
-    process = subprocess.Popen(make_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                               shell=False)
+    try:
+        process = subprocess.Popen(make_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   shell=False)
+    except FileNotFoundError as err:
+        make_cmd = [a.replace("make", "gmake") for a in make_cmd]
+        process = subprocess.Popen(make_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   shell=False)
+
     out, err = process.communicate()
     start_analyse = False
     analyse = {}
