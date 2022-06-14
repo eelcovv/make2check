@@ -225,10 +225,13 @@ class CheckRule:
         if target is not None and target not in self.all_targets:
             self.all_targets.append(target)
             target = Path(match.group(1))
-            if not target.exists() and target.suffix != "":
-                self.missing_counter += 1
-                print(f"{wfc}{wbc}" + f"Missing target: {target}" + f"{wrc}")
-            else:
+            if not target.exists():
+                if target.suffix != "":
+                    self.missing_counter += 1
+                    print(f"{wfc}{wbc}" + f"Missing target: {target}" + f"{wrc}")
+                else:
+                    _logger.debug(f"Found rule {target}")
+            elif target.as_posix().lower() != "makefile":
                 print(f"{mfc}{mbc}" + f"Found target: {target}" + f"{mrc}")
 
         if self.analyse:
