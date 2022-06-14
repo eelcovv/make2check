@@ -55,6 +55,27 @@ _logger = logging.getLogger(__name__)
 # API allowing them to be called directly from the terminal as a CLI
 # executable/script.
 
+class TerminalColors:
+    def __init__(self, foreground_color=None, background_color=None, use_terminal_colors=False):
+        self.use_terminal_colors = use_terminal_colors
+        self.foreground_color = self.set_color(color_name=foreground_color, foreground=True)
+        self.background_color = self.set_color(color_name=background_color, foreground=False)
+        if use_terminal_colors:
+            self.reset_colors = Style.RESET_ALL
+        else:
+            self.reset_colors = ""
+
+    def set_color(self, color_name, foreground=True):
+        if color_name is not None and self.use_terminal_colors:
+            if foreground:
+                color = getattr(Fore, color_name)
+            else:
+                color = getattr(Back, color_name)
+        else:
+            color = ""
+
+        return color
+
 
 def parse_args(args):
     """Parse command line parameters
@@ -93,20 +114,30 @@ def parse_args(args):
         "--test",
         help="Do een droge run zonder iets te doen",
         action="store_true",
+    )
 
     parser.add_argument(
-            "--no_colors",
-            help="Geef geen kleur aan de commando's die naar terminal geschreven worden",
-            action="store_false", default=True, dest="use_terminal_colors"
-        )
+        "--no_colors",
+        help="Geef geen kleur aan de commando's die naar terminal geschreven worden",
+        action="store_false", default=True, dest="use_terminal_colors"
+    )
     parser.add_argument(
-        "--foreground_color", help="Voorgrondkleur van commando's",
+        "--warning_foreground_color", help="Voorgrondkleur van warnings",
+        choices=FOREGROUND_COLOR_OPTIONS, default="RED"
+    )
+    parser.add_argument(
+        "--warning_background_color", help="Achtergrondkleur van commando's",
+        choices=BACKGROUND_COLOR_OPTIONS, default=None
+    )
+    parser.add_argument(
+        "--message_foreground_color", help="Voorgrondkleur van warnings",
         choices=FOREGROUND_COLOR_OPTIONS, default="GREEN"
     )
     parser.add_argument(
-        "--background_color", help="Achtergrondkleur van commando's",
+        "--message_background_color", help="Achtergrondkleur van commando's",
         choices=BACKGROUND_COLOR_OPTIONS, default=None
     )
+
     return parser.parse_args(args)
 
 
@@ -153,14 +184,32 @@ def match_must_remake(line, target):
 
 
 class CheckRule:
-    def __init__(self):
+    def __init__(self,
+                 message_foreground_color=None,
+                 message_background_color=None,
+                 warning_foreground_color=None,
+                 warning_background_color=None,
+                 use_terminal_colors=True,
+                 ):
         self.rule = None
         self.analyse = False
         self.missing_counter = 0
 
+        self.message_colors = TerminalColors(foreground_color=message_foreground_color,
+                                             background_color=message_background_color,
+                                             use_terminal_colors=use_terminal_colors)
+        self.warning_colors = TerminalColors(foreground_color=warning_foreground_color,
+                                             background_color=warning_background_color,
+                                             use_terminal_colors=use_terminal_colors)
         self.all_targets = list()
 
     def update(self, line):
+        mfc = self.message_colors.foreground_color
+        mbc = self.message_colors.background_color
+        mrc = self.message_colors.reset_colors
+        wfc = self.warning_colors.foreground_color
+        wbc = self.warning_colors.background_color
+        wrc = self.warning_colors.reset_colors
         if match := match_consider(line):
             target = match.group(1)
             self.rule = target
@@ -178,15 +227,21 @@ class CheckRule:
             target = Path(match.group(1))
             if not target.exists() and target.suffix != "":
                 self.missing_counter += 1
-                print(f"Missing target: {target}")
+                print(f"{wfc}{wbc}" + f"Missing target: {target}" + f"{wrc}")
             else:
-                _logger.info(f"Target {target} already there!")
+                print(f"{mfc}{mbc}" + f"Found target: {target}" + f"{mrc}")
 
         if self.analyse:
             pass
 
 
-def check_make_file(dryrun=False):
+def check_make_file(dryrun=False,
+                    message_foreground_color=None,
+                    message_background_color=None,
+                    warning_foreground_color=None,
+                    warning_background_color=None,
+                    use_terminal_colors=True,
+                    ):
     """
     Functie die the make file checks
 
@@ -215,7 +270,14 @@ def check_make_file(dryrun=False):
                                    shell=False)
 
     out, err = process.communicate()
-    checker = CheckRule()
+    checker = CheckRule(
+        message_foreground_color=message_foreground_color,
+        message_background_color=message_background_color,
+        warning_foreground_color=warning_foreground_color,
+        warning_background_color=warning_background_color,
+        use_terminal_colors=use_terminal_colors,
+
+    )
     clean_lines = out.decode().split("\n")
     for line in clean_lines:
 
@@ -238,7 +300,12 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
     _logger.debug("Starting make file check...")
-    missing = check_make_file(dryrun=args.test)
+    missing = check_make_file(dryrun=args.test,
+                              message_foreground_color=args.message_foreground_color,
+                              message_background_color=args.message_background_color,
+                              warning_foreground_color=args.warning_foreground_color,
+                              warning_background_color=args.warning_background_color,
+                              use_terminal_colors=args.use_terminal_colors)
     if missing == 0:
         print("All done")
     else:
