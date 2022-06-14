@@ -232,7 +232,7 @@ class CheckRule:
                 else:
                     _logger.debug(f"Found rule {target}")
             elif target.as_posix().lower() != "makefile":
-                print(f"{mfc}{mbc}" + f"Found target: {target}" + f"{mrc}")
+                print(f"{mfc}{mbc}" + f"Found source/target: {target}" + f"{mrc}")
 
         if self.analyse:
             pass
