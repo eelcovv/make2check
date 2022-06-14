@@ -26,12 +26,20 @@ import sys
 import re
 import subprocess
 from pathlib import Path
+import colorama
+from colorama import Fore, Back, Style
+from colorama.ansi import AnsiBack, AnsiFore
 
 from make2check import __version__
 
 __author__ = "Eelco van Vliet"
 __copyright__ = "Eelco van Vliet"
 __license__ = "MIT"
+
+FOREGROUND_COLOR_OPTIONS = set([c for c in dir(AnsiFore) if "__" not in c])
+BACKGROUND_COLOR_OPTIONS = set([c for c in dir(AnsiBack) if "__" not in c])
+# dit is nodig om kleuren in een powershell te kunnen gebruiken
+colorama.init(True)
 
 _logger = logging.getLogger(__name__)
 
@@ -86,6 +94,18 @@ def parse_args(args):
         help="Do een droge run zonder iets te doen",
         action="store_true",
 
+    parser.add_argument(
+            "--no_colors",
+            help="Geef geen kleur aan de commando's die naar terminal geschreven worden",
+            action="store_false", default=True, dest="use_terminal_colors"
+        )
+    parser.add_argument(
+        "--foreground_color", help="Voorgrondkleur van commando's",
+        choices=FOREGROUND_COLOR_OPTIONS, default="GREEN"
+    )
+    parser.add_argument(
+        "--background_color", help="Achtergrondkleur van commando's",
+        choices=BACKGROUND_COLOR_OPTIONS, default=None
     )
     return parser.parse_args(args)
 
@@ -185,17 +205,16 @@ def check_make_file(dryrun=False):
     _logger.info("Running {}".format(" ".join(make_cmd)))
 
     try:
+        # probeer eerst make op de command line te runnen
         process = subprocess.Popen(make_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    shell=False)
     except FileNotFoundError as err:
+        # als dit niet lukt proberen we het nog eens maar nu met 'gmake'
         make_cmd = [a.replace("make", "gmake") for a in make_cmd]
         process = subprocess.Popen(make_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    shell=False)
 
     out, err = process.communicate()
-    start_analyse = False
-    analyse = {}
-    checker = None
     checker = CheckRule()
     clean_lines = out.decode().split("\n")
     for line in clean_lines:
