@@ -116,9 +116,9 @@ def parse_args(args):
         action="store_true",
     )
     parser.add_argument(
-        "target",
+        "targets",
         help="Specificeer de make target die je wilt checken",
-        nargs="?"
+        nargs="*"
     )
 
     parser.add_argument(
@@ -244,7 +244,7 @@ class CheckRule:
 
 
 def check_make_file(dryrun=False,
-                    target=None,
+                    targets=None,
                     message_foreground_color=None,
                     message_background_color=None,
                     warning_foreground_color=None,
@@ -255,19 +255,19 @@ def check_make_file(dryrun=False,
     Functie die the make file checks
     Args:
         dryrun: bool
-            Doe geen echt check, maar laat alleen de make commando's zien
-        target: str
-            Specificeer de makefile rule om te checken
+            Doe geen echt controle, maar laat alleen de make commando's zien
+        targets: list of None
+            Specificeer de makefile rule om te controleren.
         message_foreground_color: str
             Kleur van de voorgrond boodschappen
         message_background_color:
             Kleur van de achtergrond boodschappen
         warning_foreground_color:
-            Kleur van de voorgrond waarschuwwing
+            Kleur van de voorgrond waarschuwing
         warning_background_color:
             Kleur van de achtergrond waarschuwingen
         use_terminal_colors: bool
-            Gebruik de terminalkleuren
+            Gebruik de terminalkleuren.
 
     Returns:
         None
@@ -282,8 +282,8 @@ def check_make_file(dryrun=False,
     make_cmd.append("make")
     make_cmd.append("-Bdn")
 
-    if target is not None:
-        make_cmd.append(target)
+    if targets:
+        make_cmd.extend(targets)
 
     _logger.info("Running {}".format(" ".join(make_cmd)))
 
@@ -329,7 +329,7 @@ def main(args):
     setup_logging(args.loglevel)
     _logger.debug("Starting make file check...")
     missing = check_make_file(dryrun=args.test,
-                              target=args.target,
+                              targets=args.targets,
                               message_foreground_color=args.message_foreground_color,
                               message_background_color=args.message_background_color,
                               warning_foreground_color=args.warning_foreground_color,
