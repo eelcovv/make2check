@@ -22,14 +22,14 @@ References:
 
 import argparse
 import logging
-import sys
 import re
 import subprocess
+import sys
 from pathlib import Path
+
 import colorama
 from colorama import Fore, Back, Style
 from colorama.ansi import AnsiBack, AnsiFore
-
 from make2check import __version__
 
 __author__ = "Eelco van Vliet"
@@ -114,6 +114,11 @@ def parse_args(args):
         "--test",
         help="Do een droge run zonder iets te doen",
         action="store_true",
+    )
+    parser.add_argument(
+        "target",
+        help="Specificeer de make target die je wilt checken",
+        nargs="?"
     )
 
     parser.add_argument(
@@ -239,6 +244,7 @@ class CheckRule:
 
 
 def check_make_file(dryrun=False,
+                    target=None,
                     message_foreground_color=None,
                     message_background_color=None,
                     warning_foreground_color=None,
@@ -247,9 +253,25 @@ def check_make_file(dryrun=False,
                     ):
     """
     Functie die the make file checks
+    Args:
+        dryrun: bool
+            Doe geen echt check, maar laat alleen de make commando's zien
+        target: str
+            Specificeer de makefile rule om te checken
+        message_foreground_color: str
+            Kleur van de voorgrond boodschappen
+        message_background_color:
+            Kleur van de achtergrond boodschappen
+        warning_foreground_color:
+            Kleur van de voorgrond waarschuwwing
+        warning_background_color:
+            Kleur van de achtergrond waarschuwingen
+        use_terminal_colors: bool
+            Gebruik de terminalkleuren
 
-    Returns: int
-        Integer
+    Returns:
+        None
+
     """
 
     make_cmd = []
@@ -259,6 +281,9 @@ def check_make_file(dryrun=False,
 
     make_cmd.append("make")
     make_cmd.append("-Bdn")
+
+    if target is not None:
+        make_cmd.append(target)
 
     _logger.info("Running {}".format(" ".join(make_cmd)))
 
@@ -304,6 +329,7 @@ def main(args):
     setup_logging(args.loglevel)
     _logger.debug("Starting make file check...")
     missing = check_make_file(dryrun=args.test,
+                              target=args.target,
                               message_foreground_color=args.message_foreground_color,
                               message_background_color=args.message_background_color,
                               warning_foreground_color=args.warning_foreground_color,
