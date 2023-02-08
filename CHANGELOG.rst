@@ -2,9 +2,9 @@
 Changelog
 =========
 
-Version 0.2
+Version 0.2.1
 ===========
-- Optie om target mee te geven  toe gevoegd
+- Optie om een of meer targets mee te geven toegevoegd
 - example wat uitgebreid
 
 Version 0.1.1
