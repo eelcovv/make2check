@@ -52,7 +52,6 @@ MANIFEST
 .venv*/
 .conda*/
 .python-version
-/examples/file1.txt
-/examples/file2.txt
-/examples/file3.txt
+/examples/*.txt
+/examples/*.csv
 /install.ps1
