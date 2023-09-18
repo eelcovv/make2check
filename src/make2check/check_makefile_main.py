@@ -55,11 +55,18 @@ _logger = logging.getLogger(__name__)
 # API allowing them to be called directly from the terminal as a CLI
 # executable/script.
 
+
 class TerminalColors:
-    def __init__(self, foreground_color=None, background_color=None, use_terminal_colors=False):
+    def __init__(
+        self, foreground_color=None, background_color=None, use_terminal_colors=False
+    ):
         self.use_terminal_colors = use_terminal_colors
-        self.foreground_color = self.set_color(color_name=foreground_color, foreground=True)
-        self.background_color = self.set_color(color_name=background_color, foreground=False)
+        self.foreground_color = self.set_color(
+            color_name=foreground_color, foreground=True
+        )
+        self.background_color = self.set_color(
+            color_name=background_color, foreground=False
+        )
         if use_terminal_colors:
             self.reset_colors = Style.RESET_ALL
         else:
@@ -88,7 +95,8 @@ def parse_args(args):
       :obj:`argparse.Namespace`: command line parameters namespace
     """
     parser = argparse.ArgumentParser(
-        description="Run make in debug mode  and find the missing files")
+        description="Run make in debug mode  and find the missing files"
+    )
     parser.add_argument(
         "--version",
         action="version",
@@ -116,31 +124,39 @@ def parse_args(args):
         action="store_true",
     )
     parser.add_argument(
-        "targets",
-        help="Specificeer de make target die je wilt checken",
-        nargs="*"
+        "targets", help="Specificeer de make target die je wilt checken", nargs="*"
     )
 
     parser.add_argument(
         "--no_colors",
         help="Geef geen kleur aan de commando's die naar terminal geschreven worden",
-        action="store_false", default=True, dest="use_terminal_colors"
+        action="store_false",
+        default=True,
+        dest="use_terminal_colors",
     )
     parser.add_argument(
-        "--warning_foreground_color", help="Voorgrondkleur van warnings",
-        choices=FOREGROUND_COLOR_OPTIONS, default="RED"
+        "--warning_foreground_color",
+        help="Voorgrondkleur van warnings",
+        choices=FOREGROUND_COLOR_OPTIONS,
+        default="RED",
     )
     parser.add_argument(
-        "--warning_background_color", help="Achtergrondkleur van commando's",
-        choices=BACKGROUND_COLOR_OPTIONS, default=None
+        "--warning_background_color",
+        help="Achtergrondkleur van commando's",
+        choices=BACKGROUND_COLOR_OPTIONS,
+        default=None,
     )
     parser.add_argument(
-        "--message_foreground_color", help="Voorgrondkleur van warnings",
-        choices=FOREGROUND_COLOR_OPTIONS, default="GREEN"
+        "--message_foreground_color",
+        help="Voorgrondkleur van warnings",
+        choices=FOREGROUND_COLOR_OPTIONS,
+        default="GREEN",
     )
     parser.add_argument(
-        "--message_background_color", help="Achtergrondkleur van commando's",
-        choices=BACKGROUND_COLOR_OPTIONS, default=None
+        "--message_background_color",
+        help="Achtergrondkleur van commando's",
+        choices=BACKGROUND_COLOR_OPTIONS,
+        default=None,
     )
 
     return parser.parse_args(args)
@@ -189,23 +205,28 @@ def match_must_remake(line, target):
 
 
 class CheckRule:
-    def __init__(self,
-                 message_foreground_color=None,
-                 message_background_color=None,
-                 warning_foreground_color=None,
-                 warning_background_color=None,
-                 use_terminal_colors=True,
-                 ):
+    def __init__(
+        self,
+        message_foreground_color=None,
+        message_background_color=None,
+        warning_foreground_color=None,
+        warning_background_color=None,
+        use_terminal_colors=True,
+    ):
         self.rule = None
         self.analyse = False
         self.missing_counter = 0
 
-        self.message_colors = TerminalColors(foreground_color=message_foreground_color,
-                                             background_color=message_background_color,
-                                             use_terminal_colors=use_terminal_colors)
-        self.warning_colors = TerminalColors(foreground_color=warning_foreground_color,
-                                             background_color=warning_background_color,
-                                             use_terminal_colors=use_terminal_colors)
+        self.message_colors = TerminalColors(
+            foreground_color=message_foreground_color,
+            background_color=message_background_color,
+            use_terminal_colors=use_terminal_colors,
+        )
+        self.warning_colors = TerminalColors(
+            foreground_color=warning_foreground_color,
+            background_color=warning_background_color,
+            use_terminal_colors=use_terminal_colors,
+        )
         self.all_targets = list()
 
     def update(self, line):
@@ -243,14 +264,15 @@ class CheckRule:
             pass
 
 
-def check_make_file(dryrun=False,
-                    targets=None,
-                    message_foreground_color=None,
-                    message_background_color=None,
-                    warning_foreground_color=None,
-                    warning_background_color=None,
-                    use_terminal_colors=True,
-                    ):
+def check_make_file(
+    dryrun=False,
+    targets=None,
+    message_foreground_color=None,
+    message_background_color=None,
+    warning_foreground_color=None,
+    warning_background_color=None,
+    use_terminal_colors=True,
+):
     """
     Functie die the make file checks
     Args:
@@ -289,13 +311,15 @@ def check_make_file(dryrun=False,
 
     try:
         # probeer eerst make op de command line te runnen
-        process = subprocess.Popen(make_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                   shell=False)
+        process = subprocess.Popen(
+            make_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False
+        )
     except FileNotFoundError as err:
         # als dit niet lukt proberen we het nog eens maar nu met 'gmake'
         make_cmd = [a.replace("make", "gmake") for a in make_cmd]
-        process = subprocess.Popen(make_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                   shell=False)
+        process = subprocess.Popen(
+            make_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False
+        )
 
     out, err = process.communicate()
     checker = CheckRule(
@@ -304,7 +328,6 @@ def check_make_file(dryrun=False,
         warning_foreground_color=warning_foreground_color,
         warning_background_color=warning_background_color,
         use_terminal_colors=use_terminal_colors,
-
     )
     clean_lines = out.decode().split("\n")
     for line in clean_lines:
@@ -328,13 +351,15 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
     _logger.debug("Starting make file check...")
-    missing = check_make_file(dryrun=args.test,
-                              targets=args.targets,
-                              message_foreground_color=args.message_foreground_color,
-                              message_background_color=args.message_background_color,
-                              warning_foreground_color=args.warning_foreground_color,
-                              warning_background_color=args.warning_background_color,
-                              use_terminal_colors=args.use_terminal_colors)
+    missing = check_make_file(
+        dryrun=args.test,
+        targets=args.targets,
+        message_foreground_color=args.message_foreground_color,
+        message_background_color=args.message_background_color,
+        warning_foreground_color=args.warning_foreground_color,
+        warning_background_color=args.warning_background_color,
+        use_terminal_colors=args.use_terminal_colors,
+    )
     if missing == 0:
         print("All done")
     else:
